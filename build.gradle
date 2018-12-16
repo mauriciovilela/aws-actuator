@@ -9,8 +9,13 @@ buildscript {
     }
     dependencies {
         classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+        classpath("org.springframework.boot:spring-boot-starter-parent:${springBootVersion}")
         classpath("com.bmuschko:gradle-docker-plugin:${gradleDockerPluginVersion}")
     }
+}
+
+plugins {
+    id "com.gorylenko.gradle-git-properties" version "1.5.2"
 }
 
 apply plugin: 'java'
@@ -23,14 +28,6 @@ group = 'com.hibicode'
 version = '0.0.1-SNAPSHOT'
 sourceCompatibility = 1.8
 ext['lombok.version'] = '1.18.0'
-
-springBoot {
-    buildInfo()
-}
-
-plugins {
-    id "com.gorylenko.gradle-git-properties" version "1.4.17"
-}
 
 repositories {
     mavenCentral()
@@ -61,7 +58,20 @@ dependencies {
 
 import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
 
+// generate git.properties on classpath
 task buildImage(type: DockerBuildImage) {
     inputDir = file('.')
     tag = 'mauriciovilela/beerstore:1.0'
 }
+
+gitProperties {
+    gitPropertiesDir = "${project.rootDir}/src/main/resources"
+}
+generateGitProperties.outputs.upToDateWhen { false }
+
+// generate build-info.properties on classpath
+task buildInfo(type: org.springframework.boot.gradle.tasks.buildinfo.BuildInfo) {
+    destinationDir = file("${project.rootDir}/src/main/resources")
+}
+
+compileJava.dependsOn buildInfo
